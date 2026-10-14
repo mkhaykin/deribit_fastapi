@@ -1,3 +1,4 @@
+celery-types
 pre-commit
 pytest
 pytest-clarity
