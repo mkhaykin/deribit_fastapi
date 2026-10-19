@@ -1,4 +1,4 @@
-FROM python:3.11-slim
+FROM python:3.12-slim
 
 LABEL maintainer="mkhaikin@yandex.ru"
 
@@ -13,3 +13,4 @@ RUN pip install --no-cache-dir --upgrade pip \
     && pip install --no-cache-dir -r /tmp/requirements.txt
 
 COPY ./src /app
+COPY ./migrations /app/migrations

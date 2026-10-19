@@ -1,6 +1,11 @@
+import asyncio
+import time
+
 from celery import Celery
 
+from fetch_data import get_prices
 from settings import settings
+from store_data import DTO, store_prices
 
 
 class CeleryConfig:
@@ -23,7 +28,16 @@ app_celery.config_from_object(CeleryConfig)
 
 @app_celery.task
 def task_request() -> None:
-    print("do something ...")
+    results = [
+        DTO(
+            ticker=result.index_name,
+            price=result.result.index_price,
+            ts=int(time.time()),
+        )
+        for result in asyncio.run(get_prices())
+    ]
+
+    store_prices(results)
 
 
 app_celery.conf.beat_schedule = {
