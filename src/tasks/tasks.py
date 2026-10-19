@@ -3,15 +3,16 @@ import time
 
 from celery import Celery
 
-from fetch_data import get_prices
-from settings import settings
-from store_data import DTO, store_prices
+from config import config
+
+from .fetch_data import get_prices
+from .store_data import DTO, store_prices
 
 
 class CeleryConfig:
     enable_utc = True
     timezone = "Europe/Moscow"
-    broker_url = f"redis://{settings.REDIS_SERVER}:6379/0"
+    broker_url = config.REDIS_DSN
     broker_connection_retry_on_startup = False
     result_backend = "rpc://"
     worker_send_task_event = False
@@ -44,6 +45,6 @@ app_celery.conf.beat_schedule = {
     "request-to-deribit-every-minute": {
         "name": "request to deribit.com",
         "task": task_request.name,
-        "schedule": settings.REQUEST_SCHEDULE,
+        "schedule": config.REQUEST_SCHEDULE,
     },
 }

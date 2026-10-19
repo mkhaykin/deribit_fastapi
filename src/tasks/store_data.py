@@ -6,7 +6,7 @@ import psycopg2
 from psycopg2 import sql
 from psycopg2.extras import execute_values
 
-from settings import settings
+from config import config
 
 
 @dataclass(frozen=True, slots=True)
@@ -23,7 +23,7 @@ def store_prices(items: List[DTO]) -> None:
     data = [(item.ticker, item.price, item.ts) for item in items]
 
     with psycopg2.connect(
-        dsn=settings.DATABASE_DSN,
+        dsn=config.DATABASE_DSN,
     ) as conn:
         conn.set_session(autocommit=True)
         with conn.cursor() as cur:

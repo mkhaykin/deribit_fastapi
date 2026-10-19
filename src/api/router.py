@@ -4,8 +4,8 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query
 
-from schemas import IndexPriceResponse
-from services import PriceService
+from .schemas import IndexPriceResponse
+from .services import PriceService
 
 router = APIRouter()
 

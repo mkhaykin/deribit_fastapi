@@ -6,7 +6,7 @@ import aiohttp
 from aiohttp import ClientSession
 from pydantic import BaseModel, model_validator
 
-API_URL = "https://test.deribit.com/api/v2"  # TODO перенести в настройки
+from config import config
 
 
 class FetchResultModel(BaseModel):
@@ -34,7 +34,7 @@ async def _fetch_url[T: BaseModel](
     index_name: Literal["btc_usd", "eth_usd"],
     model: Type[T],
 ) -> T:
-    url = f"{API_URL}/public/get_index_price?index_name={index_name}"
+    url = f"{config.API_URL}/public/get_index_price?index_name={index_name}"
 
     async with session.get(url) as response:
         # TODO логировать, если не смогли получить или конвертнуть в модель

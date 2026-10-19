@@ -29,43 +29,42 @@ services:
       timeout: 10s
       retries: 5
 
-#  celery:
-#    container_name: celery
-#    build:
-#      context: .
-#      dockerfile: Dockerfile
-#    env_file:
-#      - .env
-#    environment:
-#      POSTGRES_HOST: db
-#      REDIS_SERVER: redis
-#      DATABASE_DSN: "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}"
-#    command: celery --app=tasks:app_celery worker --loglevel=INFO
-#    depends_on:
-#      - app_prepare
-#      - db
-#      - redis
-#    links:
-#      - redis
-#
-#  celery-beat:
-#    container_name: celery_beat
-#    build:
-#      context: .
-#      dockerfile: Dockerfile
-#    env_file:
-#      - .env
-#    environment:
-#      REDIS_SERVER: redis
-#      DATABASE_DSN: "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}"
-#    command: celery --app=tasks:app_celery beat --loglevel=INFO
-#    depends_on:
-#      - app_prepare
-#      - db
-#      - redis
-#    links:
-#      - celery
-#      - redis
+  celery:
+    container_name: celery
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    environment:
+      REDIS_DSN: "redis://redis:6379/0"
+      DATABASE_DSN: "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}"
+    command: celery --app=tasks:app_celery worker --loglevel=INFO
+    depends_on:
+      - app_prepare
+      - db
+      - redis
+    links:
+      - redis
+
+  celery-beat:
+    container_name: celery_beat
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    environment:
+      REDIS_DSN: "redis://redis:6379/0"
+      DATABASE_DSN: "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}"
+    command: celery --app=tasks:app_celery beat --loglevel=INFO
+    depends_on:
+      - app_prepare
+      - db
+      - redis
+    links:
+      - celery
+      - redis
 
   app:
     build:
@@ -76,14 +75,13 @@ services:
     env_file:
       - .env
     environment:
-#      POSTGRES_HOST: db
       DATABASE_DSN: "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}"
     ports:
       - "8000:8000"
     depends_on:
       - app_prepare
       - db
-    entrypoint: uvicorn main:app --reload --workers 1 --host 0.0.0.0 --port 8000
+    entrypoint: uvicorn api:app --reload --workers 1 --host 0.0.0.0 --port 8000
 
   app_prepare:
     build:

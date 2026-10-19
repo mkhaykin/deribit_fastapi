@@ -6,9 +6,10 @@ import asyncpg
 from fastapi import HTTPException
 from pydantic import BaseModel
 
+from config import config
 from null_logger import NullLogger
-from schemas import IndexPriceResponse
-from settings import settings
+
+from .schemas import IndexPriceResponse
 
 
 def _start_date(target_date: date) -> datetime:
@@ -45,7 +46,7 @@ class PriceService:
         *,
         logger: logging.Logger | None = None,
     ) -> None:
-        self._pg_dsn = settings.DATABASE_DSN
+        self._pg_dsn = config.DATABASE_DSN
         self._logger = logger or NullLogger(__name__)
 
     async def _get_connection(self) -> asyncpg.Connection:
