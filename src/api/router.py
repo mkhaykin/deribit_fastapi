@@ -2,7 +2,7 @@ import logging
 from datetime import date
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 
 from .schemas import IndexPriceResponse
 from .services import PriceService
@@ -33,7 +33,10 @@ async def get_latest_price(
     service: Annotated[PriceService, Depends(get_price_service)],
 ) -> IndexPriceResponse:
     """Получение последней цены валюты."""
-    return await service.get_latest_by_ticker(ticker)
+    ans = await service.get_latest_by_ticker(ticker)
+    if ans is None:
+        raise HTTPException(status_code=404, detail=f"No data found for ticker {ticker}")
+    return ans
 
 
 @router.get("/filter")

@@ -80,7 +80,7 @@ class PriceService:
         """
         return await self._fetch(query, ticker, schema=IndexPriceResponse)
 
-    async def get_latest_by_ticker(self, ticker: str) -> IndexPriceResponse:
+    async def get_latest_by_ticker(self, ticker: str) -> IndexPriceResponse | None:
         query = """
             SELECT id, ticker, price, timestamp
             FROM index_prices
@@ -90,7 +90,11 @@ class PriceService:
         """
         rows = await self._fetch(query, ticker, schema=IndexPriceResponse)
         if not rows:
-            raise HTTPException(status_code=404, detail=f"No data found for ticker {ticker}")
+            return None
+
+        if len(rows) > 1:
+            self._logger.error("Found %s rows, but expected one", len(rows))
+
         return rows[0]
 
     async def get_by_ticker_and_date(self, ticker: str, target_date: date) -> list[IndexPriceResponse]:
