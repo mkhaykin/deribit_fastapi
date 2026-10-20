@@ -1,5 +1,7 @@
 __all__ = [
-    "app",
+    "create_app",
 ]
 
-from .main import app
+from .main import create_app
+
+app = create_app()
