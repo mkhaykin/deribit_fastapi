@@ -18,8 +18,8 @@ class PriceRepository:
 
     def __init__(
         self,
-        *,
         pool: asyncpg.Pool,
+        *,
         logger: logging.Logger | None = None,
     ) -> None:
         self._pg_dsn = config.DATABASE_DSN

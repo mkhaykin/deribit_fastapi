@@ -37,8 +37,8 @@ services:
     env_file:
       - .env
     environment:
-      REDIS_DSN: "redis://redis:6379/0"
       DATABASE_DSN: "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}"
+      REDIS_DSN: "redis://redis:6379/0"
     command: celery --app=tasks:app_celery worker --loglevel=INFO
     depends_on:
       - app_prepare
@@ -55,8 +55,8 @@ services:
     env_file:
       - .env
     environment:
-      REDIS_DSN: "redis://redis:6379/0"
       DATABASE_DSN: "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}"
+      REDIS_DSN: "redis://redis:6379/0"
     command: celery --app=tasks:app_celery beat --loglevel=INFO
     depends_on:
       - app_prepare

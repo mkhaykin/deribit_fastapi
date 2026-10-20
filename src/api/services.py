@@ -32,7 +32,7 @@ class PriceService:
         logger: logging.Logger | None = None,
     ) -> None:
         self._price_repo = PriceRepository(
-            pool=pool,
+            pool,
             logger=logger,
         )
         self._logger = logger or NullLogger(__name__)
