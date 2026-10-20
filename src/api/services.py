@@ -2,9 +2,11 @@ import logging
 from datetime import date, datetime, timedelta, timezone
 
 import asyncpg
+from redis.asyncio import Redis
 
 from null_logger import NullLogger
 
+from .cache import PriceCache
 from .repository import PriceRepository
 from .schemas import IndexPriceResponse
 
@@ -29,10 +31,15 @@ class PriceService:
         self,
         *,
         pool: asyncpg.Pool,
+        redis: Redis,
         logger: logging.Logger | None = None,
     ) -> None:
         self._price_repo = PriceRepository(
             pool,
+            logger=logger,
+        )
+        self._price_cache = PriceCache(
+            redis,
             logger=logger,
         )
         self._logger = logger or NullLogger(__name__)
@@ -41,7 +48,14 @@ class PriceService:
         return await self._price_repo.get_all_by_ticker(ticker)
 
     async def get_latest_by_ticker(self, ticker: str) -> IndexPriceResponse | None:
-        return await self._price_repo.get_latest_by_ticker(ticker)
+        cached = await self._price_cache.get_latest(ticker)
+        if cached is not None:
+            return cached
+
+        price = await self._price_repo.get_latest_by_ticker(ticker)
+        if price is not None:
+            await self._price_cache.set_latest(ticker, price)
+        return price
 
     async def get_by_ticker_and_date(self, ticker: str, target_date: date) -> list[IndexPriceResponse]:
         start_timestamp = int(_start_date(target_date).timestamp())

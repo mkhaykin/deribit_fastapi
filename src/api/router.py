@@ -4,6 +4,7 @@ from typing import Annotated
 
 import asyncpg
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from redis.asyncio import Redis
 
 from .schemas import IndexPriceResponse
 from .services import PriceService
@@ -18,10 +19,15 @@ def get_pg_pool(request: Request) -> asyncpg.Pool:
     return request.app.state.pool
 
 
+def get_radis(request: Request) -> Redis:
+    return request.app.state.redis
+
+
 def get_price_service(
     pool: Annotated[asyncpg.Pool, Depends(get_pg_pool)],
+    redis: Annotated[Redis, Depends(get_radis)],
 ) -> PriceService:
-    return PriceService(pool=pool, logger=logger)
+    return PriceService(pool=pool, redis=redis, logger=logger)
 
 
 @router.get("/all")

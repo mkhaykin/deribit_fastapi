@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 
 import asyncpg
 from fastapi import FastAPI, Response, status
+from redis.asyncio import from_url
 
 from config import config
 
@@ -16,9 +17,12 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         min_size=1,
         max_size=10,
     )
+    app.state.redis = from_url(config.REDIS_DSN)
+
     try:
         yield
     finally:
+        await app.state.redis.close()
         await app.state.pool.close()
 
 
