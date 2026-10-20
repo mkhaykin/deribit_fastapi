@@ -1,5 +1,8 @@
 celery-types
+httpx2
 pre-commit
 pytest
+pytest-asyncio
 pytest-clarity
 pytest-mock
+testcontainers
