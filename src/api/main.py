@@ -18,7 +18,11 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         min_size=1,
         max_size=10,
     )
-    app.state.redis = from_url(config.REDIS_DSN)
+    app.state.redis = from_url(
+        config.REDIS_DSN,
+        socket_timeout=config.REDIS_SOCKET_TIMEOUT,
+        health_check_interval=config.REDIS_HEALTH_CHECK_INTERVAL,
+    )
 
     try:
         yield
