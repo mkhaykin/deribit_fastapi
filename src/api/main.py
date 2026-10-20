@@ -1,8 +1,28 @@
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
+
+import asyncpg
 from fastapi import FastAPI, Response, status
+
+from config import config
 
 from .router import router
 
-app = FastAPI()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+    app.state.pool = await asyncpg.create_pool(
+        dsn=config.DATABASE_DSN,
+        min_size=1,
+        max_size=10,
+    )
+    try:
+        yield
+    finally:
+        await app.state.pool.close()
+
+
+app = FastAPI(lifespan=lifespan)
 
 app.include_router(router, prefix="/api/v1")
 

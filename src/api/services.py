@@ -40,35 +40,30 @@ def _end_date(target_date: date) -> datetime:
 class PriceService:
     _pg_dsn: str
     _logger: logging.Logger
+    _pool: asyncpg.Pool
 
     def __init__(
         self,
         *,
+        pool: asyncpg.Pool,
         logger: logging.Logger | None = None,
     ) -> None:
         self._pg_dsn = config.DATABASE_DSN
         self._logger = logger or NullLogger(__name__)
-
-    async def _get_connection(self) -> asyncpg.Connection:
-        try:
-            return await asyncpg.connect(self._pg_dsn)
-        except Exception as e:
-            self._logger.exception(f"Error connecting to PostgreSQL: {e}")
-            raise HTTPException(status_code=500, detail="Database connection error") from None
+        self._pool = pool
 
     async def _fetch[T: BaseModel](self, query: str, *args: Any, schema: type[T]) -> list[T]:
-        conn = await self._get_connection()
         result: list[T] = []
         try:
             self._logger.debug(query)
-            rows = await conn.fetch(query, *args)
+            async with self._pool.acquire() as conn:
+                rows = await conn.fetch(query, *args)
             self._logger.debug(f"fetched {len(rows)} rows")
-            result.extend(schema.model_validate(dict(row)) for row in rows)
         except Exception as e:
             self._logger.exception(f"fetch error: {e}")
             raise HTTPException(status_code=500, detail="Database error") from None
-        finally:
-            await conn.close()
+
+        result.extend(schema.model_validate(dict(row)) for row in rows)
         return result
 
     async def get_all_by_ticker(self, ticker: str) -> list[IndexPriceResponse]:

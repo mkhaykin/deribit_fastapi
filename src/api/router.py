@@ -2,7 +2,8 @@ import logging
 from datetime import date
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+import asyncpg
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 
 from .schemas import IndexPriceResponse
 from .services import PriceService
@@ -13,8 +14,14 @@ logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 
-def get_price_service() -> PriceService:
-    return PriceService(logger=logger)
+def get_pg_pool(request: Request) -> asyncpg.Pool:
+    return request.app.state.pool
+
+
+def get_price_service(
+    pool: Annotated[asyncpg.Pool, Depends(get_pg_pool)],
+) -> PriceService:
+    return PriceService(pool=pool, logger=logger)
 
 
 @router.get("/all")
