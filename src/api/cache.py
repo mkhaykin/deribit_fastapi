@@ -1,5 +1,6 @@
 import logging
 
+from redis import RedisError
 from redis.asyncio import Redis
 
 from null_logger import NullLogger
@@ -25,9 +26,13 @@ class PriceCache:
         ticker: str,
     ) -> IndexPriceResponse | None:
         self._logger.debug("Запрос кеша на %s", ticker)
-        value = await self._redis.get(
-            f"price:latest:{ticker}",
-        )
+        try:
+            value = await self._redis.get(
+                f"price:latest:{ticker}",
+            )
+        except RedisError as e:
+            self._logger.error("Redis не доступен %s", e)
+            return None
 
         if value is None:
             self._logger.debug("Ключ %s не найден", ticker)
@@ -41,9 +46,13 @@ class PriceCache:
         price: IndexPriceResponse,
         ttl: int = 30,
     ) -> None:
-        await self._redis.set(
-            f"price:latest:{ticker}",
-            price.model_dump_json(),
-            ex=ttl,
-        )
         self._logger.debug("Кешируем %s = %s", ticker, price)
+        try:
+            await self._redis.set(
+                f"price:latest:{ticker}",
+                price.model_dump_json(),
+                ex=ttl,
+            )
+        except RedisError as e:
+            self._logger.error("Redis не доступен %s", e)
+            return None
