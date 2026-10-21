@@ -4,6 +4,7 @@ from typing import Generator
 
 import asyncpg
 import httpx2
+import psycopg2
 import pytest
 import pytest_asyncio
 from fastapi import FastAPI
@@ -13,6 +14,7 @@ from testcontainers.community.redis import RedisContainer
 
 from api.base_router import router as base_router
 from api.router import router
+from config import config
 
 
 @pytest.fixture(scope="session")
@@ -123,3 +125,28 @@ async def api_client(api_app: FastAPI):
             base_url="http://test",
         ) as client:
             yield client
+
+
+@pytest.fixture
+def pg_sync_conn(postgres_url: str) -> Generator[psycopg2.extensions.connection, None, None]:
+    # подменяем dsn в глобальном конфиге для тестируемой функции store_prices
+    # TODO вообще в функцию передавать dsn, но пока так
+    config.DATABASE_DSN = postgres_url
+
+    with psycopg2.connect(dsn=postgres_url) as conn:
+        with conn.cursor() as cur:
+            # таблица: TODO очень много где встречается, поправить при случае
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS index_prices (
+                    id BIGSERIAL PRIMARY KEY,
+                    ticker TEXT NOT NULL,
+                    price NUMERIC NOT NULL,
+                    timestamp BIGINT NOT NULL
+                )
+            """)
+            # очистка, сброс счетчика
+            cur.execute("TRUNCATE TABLE index_prices RESTART IDENTITY")
+        conn.commit()
+
+        # Передаем коннект в тест
+        yield conn

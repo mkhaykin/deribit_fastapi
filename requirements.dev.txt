@@ -1,3 +1,4 @@
+aresponses
 celery-types
 httpx2
 pre-commit
