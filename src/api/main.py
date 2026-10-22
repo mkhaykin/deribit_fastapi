@@ -7,8 +7,8 @@ from redis.asyncio import from_url
 
 from config import config
 
-from .base_router import router as base_router
-from .router import router
+from .routers.health import router as health_router
+from .routers.price import router as price_router
 
 
 @asynccontextmanager
@@ -34,7 +34,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 def create_app() -> FastAPI:
     app = FastAPI(lifespan=lifespan)
 
-    app.include_router(router, prefix="/api/v1")
-    app.include_router(base_router)
+    app.include_router(health_router)
+    app.include_router(price_router, prefix="/api/v1")
 
     return app

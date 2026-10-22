@@ -12,8 +12,8 @@ from redis.asyncio import Redis
 from testcontainers.community.postgres import PostgresContainer
 from testcontainers.community.redis import RedisContainer
 
-from api.base_router import router as base_router
-from api.router import router
+from api.routers.health import router as health_router
+from api.routers.price import router as price_router
 from config import config
 
 
@@ -107,10 +107,8 @@ def api_app(postgres_url: str, redis_url: str) -> Generator[FastAPI, None, None]
             await app.state.pool.close()
 
     app = FastAPI(lifespan=lifespan)
-    app.include_router(
-        base_router,
-    )
-    app.include_router(router, prefix="/api/v1")
+    app.include_router(health_router)
+    app.include_router(price_router, prefix="/api/v1")
 
     yield app
 

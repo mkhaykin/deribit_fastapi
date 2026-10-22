@@ -6,8 +6,8 @@ import asyncpg
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from redis.asyncio import Redis
 
-from .schemas import IndexPriceResponse
-from .services import PriceService
+from api.schemas import IndexPriceResponse
+from api.services import PriceService
 
 router = APIRouter()
 
