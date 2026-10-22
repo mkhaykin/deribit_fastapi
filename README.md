@@ -56,7 +56,7 @@ redis, celery, celery-beat, fastapi и контейнер для подгото�
 ```bash
 git clone git@github.com:mkhaykin/deribit_fastapi.git
 cd deribit_fastapi
-сp env.sample.txt .env
+cp env.sample.txt .env
 docker-compose up -d
 ```
 
