@@ -1,5 +1,6 @@
 import logging
 
+from pydantic import ValidationError
 from redis import RedisError
 from redis.asyncio import Redis
 
@@ -38,7 +39,12 @@ class PriceCacheService:
             self._logger.debug("Ключ %s не найден", ticker)
             return None
 
-        return IndexPriceResponse.model_validate_json(value)
+        try:
+            return IndexPriceResponse.model_validate_json(value)
+        except ValidationError:
+            self._logger.debug("Испорченное значение ключа %s в кэше %s", ticker, value)
+            await self._redis.delete(f"price:latest:{ticker}")
+            return None
 
     async def set_latest(
         self,

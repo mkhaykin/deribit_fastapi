@@ -90,5 +90,5 @@ async def test_get_latest_rejects_invalid_cached_json(
 ) -> None:
     redis_mock.get.return_value = '{"id": "not-an-integer"}'
 
-    with pytest.raises(Exception):
-        await cache.get_latest("BTC")
+    res = await cache.get_latest("BTC")
+    assert res is None
