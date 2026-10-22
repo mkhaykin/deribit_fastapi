@@ -5,14 +5,12 @@ import asyncpg
 from fastapi import HTTPException
 from pydantic import BaseModel
 
-from config import config
 from null_logger import NullLogger
 
 from .schemas import IndexPriceResponse
 
 
 class PriceRepository:
-    _pg_dsn: str
     _logger: logging.Logger
     _pool: asyncpg.Pool
 
@@ -22,7 +20,6 @@ class PriceRepository:
         *,
         logger: logging.Logger | None = None,
     ) -> None:
-        self._pg_dsn = config.DATABASE_DSN
         self._logger = logger or NullLogger(__name__)
         self._pool = pool
 
