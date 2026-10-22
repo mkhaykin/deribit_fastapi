@@ -17,19 +17,19 @@ def get_pg_pool(request: Request) -> asyncpg.Pool:
     return request.app.state.pool
 
 
-def get_radis(request: Request) -> Redis:
+def get_redis(request: Request) -> Redis:
     return request.app.state.redis
 
 
 def get_price_service(
     pool: Annotated[asyncpg.Pool, Depends(get_pg_pool)],
-    redis: Annotated[Redis, Depends(get_radis)],
+    redis: Annotated[Redis, Depends(get_redis)],
 ) -> PriceService:
     return PriceService(pool=pool, redis=redis, logger=logger)
 
 
 def get_health_service(
     pool: Annotated[asyncpg.Pool, Depends(get_pg_pool)],
-    redis: Annotated[Redis, Depends(get_radis)],
+    redis: Annotated[Redis, Depends(get_redis)],
 ) -> HealthService:
     return HealthService(pool=pool, redis=redis, logger=logger)
