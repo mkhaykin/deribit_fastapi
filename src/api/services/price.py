@@ -24,8 +24,9 @@ def _start_date(target_date: date) -> datetime:
 
 
 class PriceService:
-    _price_repo: PriceRepository
     _logger: logging.Logger
+    _price_cache: PriceCacheService
+    _price_repo: PriceRepository
 
     def __init__(
         self,
