@@ -5,7 +5,7 @@ LABEL maintainer="mkhaikin@yandex.ru"
 WORKDIR /app
 
 ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONBUFFERED 1
+ENV PYTHONUNBUFFERED 1
 
 COPY ./requirements.txt /tmp/requirements.txt
 
