@@ -49,14 +49,14 @@ repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.16.3
     hooks:
-      - id: ruff
+      - id: ruff-check
         name: ruff-linter
-        exclude: ^(app|tests)
+        exclude: ^tests/
         args: [
           "--fix",
           "--line-length=110",
-          "--target-version=py314",
-          "--select=E,W,F,ANN,B,A,COM,C4,T10,ERA,EXE,FIX,PYI,S,ARG,TD,I",
+          "--target-version=py312",
+          "--select=E,W,F,ANN,B,A,COM,C4,T10,ERA,EXE,FIX,PYI,S,ARG,TD,I,PL",
           "--ignore=ANN101,ANN102,ANN401,B017,EXE002,S101,FIX002,TD002,TD003,TD004",
           "--per-file-ignores=tests/*.py:S101",
         ]
