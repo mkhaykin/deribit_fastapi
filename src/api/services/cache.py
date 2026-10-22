@@ -43,7 +43,7 @@ class PriceCacheService:
             return IndexPriceResponse.model_validate_json(value)
         except ValidationError:
             self._logger.debug("Испорченное значение ключа %s в кэше %s", ticker, value)
-            await self._redis.delete(f"price:latest:{ticker}")
+            await self.clear_latest(ticker)
             return None
 
     async def set_latest(
@@ -62,3 +62,9 @@ class PriceCacheService:
         except RedisError as e:
             self._logger.error("Redis не доступен %s", e)
             return None
+
+    async def clear_latest(
+        self,
+        ticker: str,
+    ) -> None:
+        await self._redis.delete(f"price:latest:{ticker}")

@@ -92,3 +92,4 @@ async def test_get_latest_rejects_invalid_cached_json(
 
     res = await cache.get_latest("BTC")
     assert res is None
+    assert redis_mock.delete.call_count == 1
