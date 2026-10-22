@@ -1,3 +1,4 @@
+import logging
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from typing import Generator
@@ -148,3 +149,12 @@ def pg_sync_conn(postgres_url: str) -> Generator[psycopg2.extensions.connection,
 
         # Передаем коннект в тест
         yield conn
+
+
+@pytest.fixture(scope="session", autouse=True)
+def quiet_testcontainers_teardown():
+    """подавляем логи urllib3/docker во время уничтожения контейнеров"""
+    yield
+    # вроде только они шумят, но проверить
+    logging.getLogger("urllib3").setLevel(logging.CRITICAL)
+    logging.getLogger("docker").setLevel(logging.CRITICAL)
