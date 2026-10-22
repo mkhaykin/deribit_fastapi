@@ -1,6 +1,7 @@
 import logging
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from pathlib import Path
 from typing import Generator
 
 import asyncpg
@@ -10,11 +11,13 @@ import pytest
 import pytest_asyncio
 from fastapi import FastAPI
 from redis.asyncio import Redis
+from starlette.staticfiles import StaticFiles
 from testcontainers.community.postgres import PostgresContainer
 from testcontainers.community.redis import RedisContainer
 
 from api.routers.health import router as health_router
 from api.routers.price import router as price_router
+from api.routers.root import router as root_router
 from config import config
 
 
@@ -108,8 +111,15 @@ def api_app(postgres_url: str, redis_url: str) -> Generator[FastAPI, None, None]
             await app.state.pool.close()
 
     app = FastAPI(lifespan=lifespan)
+
+    project_dir = Path(__file__).parent.parent.absolute()
+    static_dir = str((project_dir / "src" / "api" / "static"))
+    app.mount("/static", StaticFiles(directory=static_dir), name="static")
+    app.state.static_dir = static_dir
+
     app.include_router(health_router)
     app.include_router(price_router, prefix="/api/v1")
+    app.include_router(root_router)
 
     yield app
 

@@ -8,16 +8,6 @@ from ..services.health import HealthService
 router = APIRouter()
 
 
-@router.get("/favicon.ico", include_in_schema=False)
-async def disable_favicon() -> Response:
-    return Response(status_code=204)
-
-
-@router.get("/")
-async def hello() -> dict:
-    return {"msg": "Hello World"}
-
-
 @router.get("/healthz", status_code=status.HTTP_200_OK)
 async def health() -> dict:
     return {"status": "alive"}

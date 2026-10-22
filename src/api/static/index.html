@@ -1,0 +1,79 @@
+       <!DOCTYPE html>
+       <html lang="ru">
+       <head>
+           <meta charset="UTF-8">
+           <meta name="viewport" content="width=device-width, initial-scale=1.0">
+           <title>Index Prices API — Документация</title>
+           <link rel="stylesheet" href="/static/css/styles.css">
+       </head>
+       <body>
+           <div class="container">
+               <header>
+                   <h1>Index Prices API</h1>
+                   <p class="subtitle">Правила пользования системой и примеры запросов к эндпоинтам цен</p>
+               </header>
+
+               <main>
+                   <!-- latest -->
+                   <div class="card">
+                       <div class="card-header">
+                           <span class="endpoint-title">Получить последнюю цену</span>
+                           <span class="method-tag">GET</span>
+                       </div>
+                       <p class="description">Возвращает самую актуальную (последнюю) запись цены для указанного тикера.</p>
+                       <div class="url-container">
+                           <code id="url1"><a href="/api/v1/latest?ticker=btc_usd" target="_blank" rel="noopener noreferrer" style="color: inherit; text-decoration: none;">/api/v1/latest?ticker=btc_usd</a></code>
+                           <button class="copy-btn" onclick="copyRoute('url1', this)">Копировать</button>
+                       </div>
+                   </div>
+
+                   <!-- all -->
+                   <div class="card">
+                       <div class="card-header">
+                           <span class="endpoint-title">Получить историю всех цен</span>
+                           <span class="method-tag">GET</span>
+                       </div>
+                       <p class="description">Возвращает полный массив исторических данных по запрашиваемому тикеру.</p>
+                       <div class="url-container">
+                           <code id="url2"><a href="/api/v1/all?ticker=eth_usd" target="_blank" rel="noopener noreferrer" style="color: inherit; text-decoration: none;">/api/v1/all?ticker=eth_usd</a></code>
+                           <button class="copy-btn" onclick="copyRoute('url2', this)">Копировать</button>
+                       </div>
+                   </div>
+
+                   <!-- filter -->
+                   <div class="card">
+                       <div class="card-header">
+                           <span class="endpoint-title">Фильтрация по дате</span>
+                           <span class="method-tag">GET</span>
+                       </div>
+                       <p class="description">Позволяет отфильтровать метрики цен для конкретного тикера на определенный день.</p>
+                       <div class="url-container">
+                           <code id="url3"><a href="/api/v1/filter?ticker=btc_usd&date=2026-10-22" target="_blank" rel="noopener noreferrer" style="color: inherit; text-decoration: none;">/api/v1/filter?ticker=btc_usd&date=2026-10-22</a></code>
+                           <button class="copy-btn" onclick="copyRoute('url3', this)">Копировать</button>
+                       </div>
+                   </div>
+               </main>
+
+               <footer>
+                   <p>Index Prices Service &copy; 2026. Разработано на FastAPI.</p>
+               </footer>
+           </div>
+
+           <script>
+               function copyRoute(elementId, button) {
+                   const text = document.getElementById(elementId).innerText;
+                   navigator.clipboard.writeText(text).then(() => {
+                       const originalText = button.innerText;
+                       button.innerText = 'Скопировано!';
+                       button.style.borderColor = '#10b981';
+                       button.style.color = '#10b981';
+                       setTimeout(() => {
+                           button.innerText = originalText;
+                           button.style.borderColor = '';
+                           button.style.color = '';
+                       }, 1500);
+                   });
+               }
+           </script>
+       </body>
+       </html>
