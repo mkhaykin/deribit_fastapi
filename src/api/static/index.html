@@ -50,8 +50,8 @@
             </div>
             <p class="description">Позволяет отфильтровать метрики цен для конкретного тикера на определенный день.</p>
             <div class="url-container">
-                <code id="url3"><a href="/api/v1/filter?ticker=btc_usd&date=2026-10-22" target="_blank"
-                                   rel="noopener noreferrer" style="color: inherit; text-decoration: none;">/api/v1/filter?ticker=btc_usd&date=2026-10-22</a></code>
+                <code id="url3"><a id="filter-link" href="/api/v1/filter?..." target="_blank"
+                                   rel="noopener noreferrer" style="color: inherit; text-decoration: none;">/api/v1/filter?...</a></code>
                 <button class="copy-btn" onclick="copyRoute('url3', this)">Копировать</button>
             </div>
         </div>
@@ -63,9 +63,20 @@
 </div>
 
 <script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const today = new Date().toISOString().split('T')[0];
+        const filterLink = document.getElementById("filter-link");
+        const path = `/api/v1/filter?ticker=btc_usd&date=${today}`;
+
+        filterLink.href = path;
+        filterLink.textContent = path;
+    });
+
     function copyRoute(elementId, button) {
-        const text = document.getElementById(elementId).innerText;
-        navigator.clipboard.writeText(text).then(() => {
+        const url = document.getElementById(elementId).innerText.trim();
+        const fullUrl = `${window.location.origin}${url}`;
+
+        navigator.clipboard.writeText(fullUrl).then(() => {
             const originalText = button.innerText;
             button.innerText = 'Скопировано!';
             button.style.borderColor = '#10b981';
