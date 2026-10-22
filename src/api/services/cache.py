@@ -26,23 +26,23 @@ class PriceCacheService:
         self,
         ticker: str,
     ) -> IndexPriceResponse | None:
-        self._logger.debug("Запрос кеша на %s", ticker)
+        self._logger.debug("Looking up cached value for %s", ticker)
         try:
             value = await self._redis.get(
                 f"price:latest:{ticker}",
             )
         except RedisError as e:
-            self._logger.error("Redis не доступен %s", e)
+            self._logger.error("Redis connection failed: %s", e)
             return None
 
         if value is None:
-            self._logger.debug("Ключ %s не найден", ticker)
+            self._logger.debug("No cache entry found for key %s", ticker)
             return None
 
         try:
             return IndexPriceResponse.model_validate_json(value)
         except ValidationError:
-            self._logger.debug("Испорченное значение ключа %s в кэше %s", ticker, value)
+            self._logger.debug("Malformed cache entry for key %s: %s", ticker, value)
             await self.clear_latest(ticker)
             return None
 
@@ -52,7 +52,7 @@ class PriceCacheService:
         price: IndexPriceResponse,
         ttl: int = 30,
     ) -> None:
-        self._logger.debug("Кешируем %s = %s", ticker, price)
+        self._logger.debug("Cached price for %s: %s", ticker, price)
         try:
             await self._redis.set(
                 f"price:latest:{ticker}",
@@ -60,7 +60,7 @@ class PriceCacheService:
                 ex=ttl,
             )
         except RedisError as e:
-            self._logger.error("Redis не доступен %s", e)
+            self._logger.error("Redis connection failed: %s", e)
             return None
 
     async def clear_latest(

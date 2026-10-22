@@ -28,7 +28,7 @@ class HealthService:
             async with self._pool.acquire() as conn:
                 await conn.fetch(query)
         except Exception as e:
-            self._logger.exception(f"db ready check error: {e}")
+            self._logger.error(f"db ready check error: {e}")
             return False
 
         return True

@@ -31,7 +31,7 @@ class PriceRepository:
                 rows = await conn.fetch(query, *args)
             self._logger.debug(f"fetched {len(rows)} rows")
         except Exception as e:
-            self._logger.exception(f"fetch error: {e}")
+            self._logger.error(f"fetch error: {e}")
             raise HTTPException(status_code=500, detail="Database error") from None
 
         result.extend(schema.model_validate(dict(row)) for row in rows)
