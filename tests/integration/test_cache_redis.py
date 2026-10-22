@@ -2,13 +2,13 @@ from decimal import Decimal
 
 import pytest
 
-from api.cache import PriceCache
 from api.schemas import IndexPriceResponse
+from api.services.cache import PriceCacheService
 
 
 @pytest.mark.asyncio
 async def test_cache_round_trip(redis_client) -> None:
-    cache = PriceCache(redis_client)
+    cache = PriceCacheService(redis_client)
     price = IndexPriceResponse(
         id=1,
         ticker="BTC",
@@ -24,14 +24,14 @@ async def test_cache_round_trip(redis_client) -> None:
 
 @pytest.mark.asyncio
 async def test_cache_returns_none_for_missing_key(redis_client) -> None:
-    cache = PriceCache(redis_client)
+    cache = PriceCacheService(redis_client)
 
     assert await cache.get_latest("UNKNOWN") is None
 
 
 @pytest.mark.asyncio
 async def test_cache_sets_expiration(redis_client) -> None:
-    cache = PriceCache(redis_client)
+    cache = PriceCacheService(redis_client)
     price = IndexPriceResponse(
         id=1,
         ticker="BTC",
@@ -48,7 +48,7 @@ async def test_cache_sets_expiration(redis_client) -> None:
 
 @pytest.mark.asyncio
 async def test_cache_key_isolated_by_ticker(redis_client) -> None:
-    cache = PriceCache(redis_client)
+    cache = PriceCacheService(redis_client)
 
     btc = IndexPriceResponse(
         id=1,

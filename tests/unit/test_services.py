@@ -4,9 +4,9 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-import api.services as services_module
+import api.services.price as price_service_module
 from api.schemas import IndexPriceResponse
-from api.services import PriceService
+from api.services.price import PriceService
 
 
 @pytest.fixture
@@ -25,13 +25,13 @@ def dependencies(monkeypatch):
     cache = AsyncMock()
 
     monkeypatch.setattr(
-        services_module,
+        price_service_module,
         "PriceRepository",
         lambda *args, **kwargs: repository,
     )
     monkeypatch.setattr(
-        services_module,
-        "PriceCache",
+        price_service_module,
+        "PriceCacheService",
         lambda *args, **kwargs: cache,
     )
 

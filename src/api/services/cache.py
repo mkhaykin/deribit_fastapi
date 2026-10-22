@@ -5,10 +5,10 @@ from redis.asyncio import Redis
 
 from null_logger import NullLogger
 
-from .schemas import IndexPriceResponse
+from ..schemas import IndexPriceResponse
 
 
-class PriceCache:
+class PriceCacheService:
     _logger: logging.Logger
     _redis: Redis
 

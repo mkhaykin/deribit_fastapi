@@ -6,9 +6,9 @@ from redis.asyncio import Redis
 
 from null_logger import NullLogger
 
-from .cache import PriceCache
-from .repository import PriceRepository
-from .schemas import IndexPriceResponse
+from ..repository import PriceRepository
+from ..schemas import IndexPriceResponse
+from ..services.cache import PriceCacheService
 
 
 def _start_date(target_date: date) -> datetime:
@@ -38,7 +38,7 @@ class PriceService:
             pool,
             logger=logger,
         )
-        self._price_cache = PriceCache(
+        self._price_cache = PriceCacheService(
             redis,
             logger=logger,
         )
