@@ -10,7 +10,7 @@ from ..services.price import PriceService
 router = APIRouter()
 
 
-@router.get("/all")
+@router.get("/all", description="Returns up to 1000 most recent records.")
 async def get_all_prices(
     ticker: Annotated[str, Query(..., description="Тикер валюты, например 'BTC'")],
     service: Annotated[PriceService, Depends(get_price_service)],
@@ -32,7 +32,7 @@ async def get_latest_price(
     return ans
 
 
-@router.get("/filter")
+@router.get("/filter", description="Returns up to 1000 most recent records.")
 async def get_prices_by_date(
     ticker: Annotated[str, Query(..., description="Тикер валюты, например 'BTC'")],
     target_date: Annotated[date, Query(..., alias="date", description="Дата для фильтрации (YYYY-MM-DD)")],

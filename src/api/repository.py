@@ -42,7 +42,7 @@ class PriceRepository:
             SELECT id, ticker, price, timestamp
             FROM index_prices
             WHERE ticker = $1
-            ORDER BY timestamp DESC
+            ORDER BY timestamp DESC LIMIT 1000;
         """
         return await self._fetch(query, ticker, schema=IndexPriceResponse)
 
@@ -52,7 +52,7 @@ class PriceRepository:
             FROM index_prices
             WHERE ticker = $1
             ORDER BY timestamp DESC
-            LIMIT 1
+            LIMIT 1;
         """
         rows = await self._fetch(query, ticker, schema=IndexPriceResponse)
         if not rows:
@@ -73,6 +73,6 @@ class PriceRepository:
             SELECT id, ticker, price, timestamp
             FROM index_prices
             WHERE ticker = $1 AND timestamp >= $2 AND timestamp < $3
-            ORDER BY timestamp DESC
+            ORDER BY timestamp DESC LIMIT 1000;
         """
         return await self._fetch(query, ticker, start_ts, end_ts, schema=IndexPriceResponse)
