@@ -45,8 +45,20 @@ class PriceService:
         )
         self._logger = logger or NullLogger(__name__)
 
-    async def get_all_by_ticker(self, ticker: str) -> list[IndexPriceResponse]:
-        return await self._price_repo.get_all_by_ticker(ticker)
+    async def get_all_by_ticker(
+        self,
+        ticker: str,
+        last_created_at: int | None = None,
+        last_id: int | None = None,
+        limit: int | None = None,
+    ) -> list[IndexPriceResponse]:
+        # TODO проверку на last_created_at и  last_id сюда
+        return await self._price_repo.get_all_by_ticker(
+            ticker,
+            last_created_at,
+            last_id,
+            limit,
+        )
 
     async def get_latest_by_ticker(self, ticker: str) -> IndexPriceResponse | None:
         cached = await self._price_cache.get_latest(ticker)

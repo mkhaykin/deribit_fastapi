@@ -37,14 +37,51 @@ class PriceRepository:
         result.extend(schema.model_validate(dict(row)) for row in rows)
         return result
 
-    async def get_all_by_ticker(self, ticker: str) -> list[IndexPriceResponse]:
-        query = """
+    async def get_all_by_ticker(
+        self,
+        ticker: str,
+        last_created_at: int | None = None,
+        last_id: int | None = None,
+        limit: int | None = None,
+    ) -> list[IndexPriceResponse]:
+        query, args = self._build_query_for_all(ticker, last_created_at, last_id, limit)
+
+        return await self._fetch(
+            query,
+            *args,
+            schema=IndexPriceResponse,
+        )
+
+    @staticmethod
+    def _build_query_for_all(
+        ticker: str,
+        last_created_at: int | None,
+        last_id: int | None,
+        limit: int | None,
+    ) -> tuple[str, list[int | str]]:
+        if (last_created_at is None) != (last_id is None):
+            raise ValueError("Both 'last_created_at' and 'last_id' must be provided together")
+
+        query_parts: list[str] = [
+            """
             SELECT id, ticker, price, timestamp
             FROM index_prices
             WHERE ticker = $1
-            ORDER BY timestamp DESC LIMIT 1000;
-        """
-        return await self._fetch(query, ticker, schema=IndexPriceResponse)
+        """,
+        ]
+        args: list[int | str] = [ticker]
+
+        if last_created_at is not None and last_id is not None:
+            query_parts.append(f" AND (timestamp, id) < (${len(args) + 1}, ${len(args) + 2})")
+            args.extend((last_created_at, last_id))
+
+        query_parts.append("ORDER BY timestamp DESC, id DESC")
+
+        if limit is not None:
+            query_parts.append(f"LIMIT ${len(args) + 1}")
+            args.append(limit)
+
+        return "\n".join(query_parts), args
 
     async def get_latest_by_ticker(self, ticker: str) -> IndexPriceResponse | None:
         query = """

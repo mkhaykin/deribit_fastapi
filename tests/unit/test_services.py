@@ -99,7 +99,7 @@ async def test_get_all_delegates_to_repository(
     result = await service.get_all_by_ticker("BTC")
 
     assert result == [price]
-    repository.get_all_by_ticker.assert_awaited_once_with("BTC")
+    repository.get_all_by_ticker.assert_awaited_once_with("BTC", None, None, None)
 
 
 @pytest.mark.asyncio
