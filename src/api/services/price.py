@@ -58,7 +58,19 @@ class PriceService:
             await self._price_cache.set_latest(ticker, price)
         return price
 
-    async def get_by_ticker_and_date(self, ticker: str, target_date: date) -> list[IndexPriceResponse]:
+    async def get_by_ticker_and_date(
+        self,
+        ticker: str,
+        target_date: date,
+        limit: int | None = None,
+        offset: int | None = None,
+    ) -> list[IndexPriceResponse]:
         start_timestamp = int(_start_date(target_date).timestamp())
         end_timestamp = int(_start_date(target_date + timedelta(days=1)).timestamp())
-        return await self._price_repo.get_by_ticker_and_date(ticker, start_timestamp, end_timestamp)
+        return await self._price_repo.get_by_ticker_and_date(
+            ticker,
+            start_timestamp,
+            end_timestamp,
+            limit,
+            offset,
+        )

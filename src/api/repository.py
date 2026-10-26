@@ -68,11 +68,13 @@ class PriceRepository:
         ticker: str,
         start_ts: int,
         end_ts: int,
+        limit: int | None = None,
+        offset: int | None = None,
     ) -> list[IndexPriceResponse]:
         query = """
             SELECT id, ticker, price, timestamp
             FROM index_prices
             WHERE ticker = $1 AND timestamp >= $2 AND timestamp < $3
-            ORDER BY timestamp DESC LIMIT 1000;
+            ORDER BY timestamp DESC LIMIT $4 OFFSET $5;
         """
-        return await self._fetch(query, ticker, start_ts, end_ts, schema=IndexPriceResponse)
+        return await self._fetch(query, ticker, start_ts, end_ts, limit, offset, schema=IndexPriceResponse)

@@ -118,4 +118,6 @@ async def test_date_filter_uses_utc_day_boundaries(
         "BTC",
         1735776000,  # 2025-01-02 00:00:00 UTC
         1735862400,  # 2025-01-03 00:00:00 UTC
+        None,
+        None,
     )
