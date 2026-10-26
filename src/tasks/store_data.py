@@ -17,6 +17,21 @@ class DTO:
     price: Decimal
     ts: int
 
+    def to_dict(self) -> dict:
+        return {
+            "ticker": self.ticker,
+            "price": str(self.price),
+            "ts": self.ts,
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict) -> "DTO":
+        return cls(
+            ticker=data["ticker"],
+            price=Decimal(data["price"]),
+            ts=int(data["ts"]),
+        )
+
 
 def store_prices(
     items: List[DTO],

@@ -5,6 +5,7 @@ from typing import Any, List, Literal, Type
 
 import aiohttp
 from aiohttp import ClientSession
+from fastapi import status
 from pydantic import BaseModel, ValidationError, model_validator
 
 from config import config
@@ -34,6 +35,10 @@ class FetchModel(BaseModel):
         if info.context and isinstance(data, dict):
             data.update(info.context)
         return data
+
+
+class RetryableAPIError(Exception):
+    """исключение, допускающее повтор"""
 
 
 async def _fetch_url[T: BaseModel](
@@ -70,17 +75,36 @@ async def get_prices(
     logger: logging.Logger | None = None,
     timeout: aiohttp.ClientTimeout = HTTP_TIMEOUT,
     tickets: frozenset[TICKETS_VALUES] = TICKETS_NAMES,
-) -> List[FetchModel]:
+) -> tuple[List[FetchModel], Exception | None]:
     log = logger or NullLogger(__name__)
 
     async with aiohttp.ClientSession(timeout=timeout) as session:
         tasks = [_fetch_url(session, index_name, FetchModel) for index_name in tickets]
         results = await asyncio.gather(*tasks, return_exceptions=True)
-        ans = [result for result in results if isinstance(result, FetchModel)]
 
-        if len(ans) != len(results):
-            succeeded = {item.index_name for item in ans}
-            missing = sorted(tickets - succeeded)
-            log.warning(f"Incomplete price set; missing: {', '.join(missing)}")
+    ans: List[FetchModel] = []
+    retried_tickets = []
+    exc: Exception | None = None
+    for ticket, result in zip(tickets, results, strict=True):
+        if isinstance(result, FetchModel):
+            ans.append(result)
+            continue
 
-        return ans
+        is_5xx = (
+            isinstance(result, aiohttp.ClientResponseError)
+            and result.status >= status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+        is_network_or_timeout = isinstance(result, (aiohttp.ClientError, TimeoutError, asyncio.TimeoutError))
+
+        if is_5xx or is_network_or_timeout:
+            retried_tickets.append(ticket)
+
+    if len(ans) != len(results):
+        succeeded = {item.index_name for item in ans}
+        missing = sorted(tickets - succeeded)
+        log.warning(f"Incomplete price set; missing: {', '.join(missing)}")
+
+    if retried_tickets:
+        exc = RetryableAPIError(f"API failed for tickets: {', '.join(retried_tickets)}")
+
+    return ans, exc

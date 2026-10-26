@@ -45,7 +45,7 @@ async def test_get_prices_full_success(fetch_data, aresponses, caplog):
         )
 
     aresponses.add("fakeapi.com", "/public/get_index_price", "GET", response=response_func, repeat=2)
-    results = await get_prices(logger=test_logger)
+    results, exc = await get_prices(logger=test_logger)
 
     assert len(results) == 2
     assert {r.index_name for r in results} == {"btc_usd", "eth_usd"}
@@ -93,7 +93,7 @@ async def test_get_prices_partial_success(
 
     aresponses.add("fakeapi.com", "/public/get_index_price", "GET", response=response_func, repeat=2)
 
-    results = await get_prices(logger=test_logger)
+    results, exc = await get_prices(logger=test_logger)
 
     assert len(results) == 1
 
@@ -119,7 +119,7 @@ async def test_get_prices_full_failure(aresponses, caplog):
         "fakeapi.com", "/public/get_index_price?index_name=eth_usd", "GET", aresponses.Response(status=500)
     )
 
-    results = await get_prices(logger=test_logger)
+    results, exc = await get_prices(logger=test_logger)
 
     assert len(results) == 0
 
