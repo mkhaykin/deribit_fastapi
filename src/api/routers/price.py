@@ -34,7 +34,13 @@ def decode_cursor(cursor_str: str) -> tuple[int, int]:
     return data["t"], data["i"]
 
 
-@router.get("/all", description="Returns up to 1000 most recent records.")
+@router.get(
+    "/all",
+    description=(
+        "Returns a paginated list of historical index prices "
+        "for the specified ticker, ordered from newest to oldest."
+    ),
+)
 async def get_all_prices(  # noqa: PLR0913, PLR0917
     service: Annotated[PriceService, Depends(get_price_service)],
     request: Request,
