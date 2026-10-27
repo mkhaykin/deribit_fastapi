@@ -25,11 +25,11 @@ logger = logging.getLogger(__name__)
 
 def encode_cursor(timestamp: int, row_id: int) -> str:
     cursor_data = json.dumps({"t": timestamp, "i": row_id})
-    return base64.b64encode(cursor_data.encode()).decode()
+    return base64.urlsafe_b64encode(cursor_data.encode()).decode()
 
 
 def decode_cursor(cursor_str: str) -> tuple[int, int]:
-    decoded = base64.b64decode(cursor_str.encode()).decode()
+    decoded = base64.urlsafe_b64decode(cursor_str.encode()).decode()
     data = json.loads(decoded)
     return data["t"], data["i"]
 
