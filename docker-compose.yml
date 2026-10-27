@@ -57,7 +57,7 @@ services:
     environment:
       DATABASE_DSN: "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}"
       REDIS_DSN: "redis://redis:6379/0"
-    command: celery --app=tasks:app_celery beat --loglevel=INFO
+    command: celery --app=tasks.beat:app_celery beat --loglevel=INFO
     depends_on:
       - app_prepare
       - db
