@@ -9,7 +9,7 @@ from null_logger import NullLogger
 from ..schemas import IndexPriceResponse
 
 
-class PriceCacheService:
+class LatestPriceCache:
     _logger: logging.Logger
     _redis: Redis
 

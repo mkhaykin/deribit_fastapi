@@ -31,7 +31,7 @@ def dependencies(monkeypatch):
     )
     monkeypatch.setattr(
         price_service_module,
-        "PriceCacheService",
+        "LatestPriceCache",
         lambda *args, **kwargs: cache,
     )
 

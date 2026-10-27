@@ -8,7 +8,7 @@ from null_logger import NullLogger
 
 from ..repository import PriceRepository
 from ..schemas import IndexPriceResponse
-from ..services.cache import PriceCacheService
+from ..services.cache import LatestPriceCache
 
 
 def _start_date(target_date: date) -> datetime:
@@ -25,7 +25,7 @@ def _start_date(target_date: date) -> datetime:
 
 class PriceService:
     _logger: logging.Logger
-    _price_cache: PriceCacheService
+    _price_cache: LatestPriceCache
     _price_repo: PriceRepository
 
     def __init__(
@@ -39,7 +39,7 @@ class PriceService:
             pool,
             logger=logger,
         )
-        self._price_cache = PriceCacheService(
+        self._price_cache = LatestPriceCache(
             redis,
             logger=logger,
         )
