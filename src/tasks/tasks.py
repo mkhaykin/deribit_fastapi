@@ -1,17 +1,16 @@
 import asyncio
-import logging
 import time
 from typing import Literal, TypedDict
 
 from celery import chain, shared_task
+from celery.utils.log import get_task_logger
 
 from config import config
 
 from .fetch_data import QueryTicket, get_prices
 from .store_data import DTO, store_prices
 
-logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger(__name__)
+logger = get_task_logger(__name__)
 
 
 class IndexDataDict(TypedDict):
