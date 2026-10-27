@@ -2,12 +2,15 @@ import logging
 from typing import Any
 
 import asyncpg
-from fastapi import HTTPException
 from pydantic import BaseModel
 
 from null_logger import NullLogger
 
 from .schemas import IndexPriceResponse
+
+
+class RepositoryError(RuntimeError):
+    """An error occurred while accessing the database."""
 
 
 class PriceRepository:
@@ -30,9 +33,14 @@ class PriceRepository:
             async with self._pool.acquire() as conn:
                 rows = await conn.fetch(query, *args)
             self._logger.debug(f"fetched {len(rows)} rows")
-        except Exception as e:
-            self._logger.error(f"fetch error: {e}")
-            raise HTTPException(status_code=500, detail="Database error") from None
+        except (
+            asyncpg.PostgresError,
+            asyncpg.InterfaceError,
+            OSError,
+            TimeoutError,
+        ) as e:
+            self._logger.exception("Database fetch error")
+            raise RepositoryError("Database operation failed") from e
 
         result.extend(schema.model_validate(dict(row)) for row in rows)
         return result

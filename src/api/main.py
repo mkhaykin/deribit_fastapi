@@ -3,12 +3,14 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 
 import asyncpg
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 from redis.asyncio import from_url
 from starlette.staticfiles import StaticFiles
 
 from config import config
 
+from .repository import RepositoryError
 from .routers.health import router as health_router
 from .routers.price import router as price_router
 from .routers.root import router as root_router
@@ -34,8 +36,23 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         await app.state.pool.close()
 
 
+async def repository_error_handler(
+    request: Request,  # noqa: ARG001
+    exc: Exception,  # noqa: ARG001
+) -> JSONResponse:
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Internal server error"},
+    )
+
+
 def create_app() -> FastAPI:
     app = FastAPI(lifespan=lifespan)
+
+    app.add_exception_handler(
+        RepositoryError,
+        repository_error_handler,
+    )
 
     base_dir = Path(__file__).parent.absolute()
     static_dir = str((base_dir / "static"))
