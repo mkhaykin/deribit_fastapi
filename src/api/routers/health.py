@@ -25,7 +25,7 @@ async def ready(
         response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
         return {
             "status": "unready",
-            "db": "up" if is_pg_ok else "down",
+            "db": "down",
             "cache": "up" if is_redis_ok else "down",
         }
 
@@ -33,7 +33,7 @@ async def ready(
         return {
             "status": "degraded",
             "db": "up",
-            "cache": "up" if is_redis_ok else "down",
+            "cache": "down",
         }
 
     return {"status": "ready"}
