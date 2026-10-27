@@ -5,7 +5,7 @@ import aiohttp
 import pytest
 from pydantic import BaseModel
 
-from tasks.fetch_data import _fetch_index
+from tasks.price_collector.fetch_data import _fetch_index
 
 
 class DummyModel(BaseModel):

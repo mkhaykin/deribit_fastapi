@@ -2,9 +2,9 @@ from decimal import Decimal
 
 import pytest
 
-from tasks.fetch_data import FetchModel, FetchResultModel
-from tasks.schemas import IndexRequestTask
-from tasks.tasks import fetch_prices
+from tasks.price_collector.fetch_data import FetchModel, FetchResultModel
+from tasks.price_collector.main import fetch_prices
+from tasks.price_collector.schemas import IndexRequestTask
 
 
 class FetchModelFake(FetchModel):
@@ -12,6 +12,9 @@ class FetchModelFake(FetchModel):
     usIn: int = 1
     usOut: int = 1
     usDiff: int = 1
+
+
+PATH_TO_GET_PRICES = "tasks.price_collector.main.get_prices"
 
 
 # Фикстура для фейковых входных данных
@@ -39,7 +42,7 @@ def mock_fetched_items():
 
 def test_fetch_prices_success(mocker, fake_indexes, mock_fetched_items):
     # патчим get_prices, возвращаем готовое
-    mocker.patch("tasks.tasks.get_prices", return_value=(mock_fetched_items, None))
+    mocker.patch(PATH_TO_GET_PRICES, return_value=(mock_fetched_items, None))
 
     result = fetch_prices(fake_indexes)
 
@@ -59,7 +62,7 @@ def test_fetch_prices_partial_success(mocker, fake_indexes):
     mock_item_btc.result.index_price = 50000.0
 
     # Имитируем, что ошибка была, но один элемент всё же вернулся
-    mocker.patch("tasks.tasks.get_prices", return_value=([mock_item_btc], RuntimeError("API Error")))
+    mocker.patch(PATH_TO_GET_PRICES, return_value=([mock_item_btc], RuntimeError("API Error")))
 
     # Функция НЕ должна упасть, так как items не пустой
     result = fetch_prices(fake_indexes)
@@ -71,7 +74,7 @@ def test_fetch_prices_partial_success(mocker, fake_indexes):
 # 3. Тест полного провала (исключение должно проброситься)
 def test_fetch_prices_total_failure(mocker, fake_indexes):
     # Items пустой, ошибка присутствует
-    mocker.patch("tasks.tasks.get_prices", return_value=([], RuntimeError("Connection refused")))
+    mocker.patch(PATH_TO_GET_PRICES, return_value=([], RuntimeError("Connection refused")))
 
     # Проверяем, что таска Celery выбросит это исключение для ретрая
     with pytest.raises(RuntimeError, match="Connection refused"):

@@ -1,7 +1,9 @@
+from typing import Type
+
 from celery import Celery
 
 from config import config
-from tasks.fetch_data import RetryableAPIError
+from tasks.price_collector.fetch_data import RetryableAPIError
 
 
 class CeleryConfig:
@@ -19,21 +21,25 @@ class CeleryConfig:
     task_acks_late = False
     worker_prefetch_multiplier = 1
 
+    task_annotations = {
+        "price_collector.fetch_prices": {
+            "max_retries": 3,
+            "default_retry_delay": 10,
+            "autoretry_for": (RetryableAPIError,),
+        },
+        "price_collector.store_prices": {
+            "max_retries": 5,
+            "default_retry_delay": 3,
+        },
+    }
 
-app_celery = Celery(__name__)
+
+def create_celery_app(config_obj: Type = CeleryConfig) -> Celery:
+    app = Celery(__name__)
+    app.config_from_object(config_obj)
+    app.autodiscover_tasks(["tasks.price_collector"])
+
+    return app
 
 
-app_celery.config_from_object(CeleryConfig)
-
-
-app_celery.conf.task_annotations = {
-    "price_collector.fetch_prices": {
-        "max_retries": 3,
-        "default_retry_delay": 10,
-        "autoretry_for": (RetryableAPIError,),
-    },
-    "price_collector.store_prices": {
-        "max_retries": 5,
-        "default_retry_delay": 3,
-    },
-}
+app_celery = create_celery_app()

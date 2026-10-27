@@ -5,7 +5,7 @@ from decimal import Decimal
 import pytest
 from aiohttp.web_request import BaseRequest
 
-from tasks.fetch_data import QueryTicket, get_prices
+from tasks.price_collector.fetch_data import QueryTicket, get_prices
 
 
 @pytest.fixture

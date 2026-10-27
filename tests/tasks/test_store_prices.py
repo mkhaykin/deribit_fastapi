@@ -4,8 +4,8 @@ from decimal import Decimal
 import pytest
 
 from config import config
-from tasks.schemas import PriceSnapshot
-from tasks.store_data import store_prices
+from tasks.price_collector.schemas import PriceSnapshot
+from tasks.price_collector.store_data import store_prices
 
 
 def test_store_prices_success(pg_sync_conn, caplog):

@@ -5,7 +5,7 @@ import pytest
 from _pytest.logging import LogCaptureFixture
 from pydantic import BaseModel, ValidationError
 
-from tasks.fetch_data import _fetch_index
+from tasks.price_collector.fetch_data import _fetch_index
 
 
 class DummyModel(BaseModel):

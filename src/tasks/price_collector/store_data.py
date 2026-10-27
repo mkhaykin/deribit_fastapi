@@ -7,7 +7,7 @@ from psycopg2.extras import execute_values
 
 from config import config
 from null_logger import NullLogger
-from tasks.schemas import PriceSnapshot
+from tasks.price_collector.schemas import PriceSnapshot
 
 
 def store_prices(
