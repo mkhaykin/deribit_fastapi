@@ -1,22 +1,46 @@
 import asyncio
 import logging
 import time
+from typing import Literal, TypedDict
 
 from celery import chain, shared_task
 
-from .fetch_data import get_prices
+from config import config
+
+from .fetch_data import QueryTicket, get_prices
 from .store_data import DTO, store_prices
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 
+class IndexDataDict(TypedDict):
+    index_name: Literal["btc_usd", "eth_usd"]
+    url: str
+
+
 @shared_task(
     name="price_collector.fetch_prices",
 )
-def fetch_prices() -> list[dict]:
-    items, exc = asyncio.run(get_prices(logger=logger))
+def fetch_prices(indexes: list[IndexDataDict]) -> list[dict]:
+    tickets = [
+        QueryTicket(
+            index_name=index["index_name"],
+            url=index["url"],
+        )
+        for index in indexes
+    ]
+
+    items, exc = asyncio.run(
+        get_prices(
+            tickets,
+            logger=logger,
+        ),
+    )
+
     if exc is not None and not items:
+        # выбрасываем исключение только если ничего не получили.
+        # Даже если отработала часть запросов, нас это устроит
         raise exc
 
     ts = int(time.time())
@@ -45,5 +69,19 @@ def store_prices_task(self, raw_results: list[dict]) -> None:  # noqa: ANN001
 
 @shared_task(name="price_collector.task_request")
 def task_request() -> None:
-    pipeline = chain(fetch_prices.s(), store_prices_task.s())
+    pipeline = chain(
+        fetch_prices.s(
+            [
+                {
+                    "index_name": "btc_usd",
+                    "url": config.INDEX_PRICE_URL.format(index_name="btc_usd"),
+                },
+                {
+                    "index_name": "eth_usd",
+                    "url": config.INDEX_PRICE_URL.format(index_name="eth_usd"),
+                },
+            ],
+        ),
+        store_prices_task.s(),
+    )
     pipeline.apply_async()
