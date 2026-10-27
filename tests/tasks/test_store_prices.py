@@ -4,7 +4,8 @@ from decimal import Decimal
 import pytest
 
 from config import config
-from tasks.store_data import DTO, store_prices
+from tasks.schemas import PriceSnapshot
+from tasks.store_data import store_prices
 
 
 def test_store_prices_success(pg_sync_conn, caplog):
@@ -13,8 +14,8 @@ def test_store_prices_success(pg_sync_conn, caplog):
     caplog.set_level(logging.DEBUG, logger="test_logger")
 
     items = [
-        DTO(ticker="btc_usd", price=Decimal("65000.50"), ts=1700000000),
-        DTO(ticker="eth_usd", price=Decimal("3500.25"), ts=1700000000),
+        PriceSnapshot(ticker="btc_usd", price=Decimal("65000.50"), ts=1700000000),
+        PriceSnapshot(ticker="eth_usd", price=Decimal("3500.25"), ts=1700000000),
     ]
 
     result = store_prices(items, logger=test_logger)
@@ -40,7 +41,7 @@ def test_store_prices_success(pg_sync_conn, caplog):
 
 def test_store_prices_duplicate_insertion(pg_sync_conn):
     """повторная вставка (пока без уникальных индексов делаем дубли)"""
-    items = [DTO(ticker="btc_usd", price=Decimal("65000.50"), ts=1700000000)]
+    items = [PriceSnapshot(ticker="btc_usd", price=Decimal("65000.50"), ts=1700000000)]
 
     assert store_prices(items) is True
     assert store_prices(items) is True
@@ -87,7 +88,7 @@ def test_store_prices_database_error_handling(caplog):
     test_logger = logging.getLogger("test_logger")
     caplog.set_level(logging.ERROR, logger="test_logger")
 
-    items = [DTO(ticker="btc_usd", price=Decimal("65000.0"), ts=1700000000)]
+    items = [PriceSnapshot(ticker="btc_usd", price=Decimal("65000.0"), ts=1700000000)]
 
     result = store_prices(items, logger=test_logger)
 

@@ -1,6 +1,5 @@
 import asyncio
 import time
-from typing import Literal, TypedDict
 
 from celery import chain, shared_task
 from celery.utils.log import get_task_logger
@@ -8,20 +7,16 @@ from celery.utils.log import get_task_logger
 from config import config
 
 from .fetch_data import QueryTicket, get_prices
-from .store_data import DTO, store_prices
+from .schemas import IndexRequestTask, PriceSnapshot, PriceTransferPayload
+from .store_data import store_prices
 
 logger = get_task_logger(__name__)
-
-
-class IndexDataDict(TypedDict):
-    index_name: Literal["btc_usd", "eth_usd"]
-    url: str
 
 
 @shared_task(
     name="price_collector.fetch_prices",
 )
-def fetch_prices(indexes: list[IndexDataDict]) -> list[dict]:
+def fetch_prices(indexes: list[IndexRequestTask]) -> list[PriceTransferPayload]:
     tickets = [
         QueryTicket(
             index_name=index["index_name"],
@@ -45,7 +40,7 @@ def fetch_prices(indexes: list[IndexDataDict]) -> list[dict]:
     ts = int(time.time())
     # тут мы делаем вроде пустую работу, но нам все равно валидировать надо
     results = [
-        DTO(
+        PriceSnapshot(
             ticker=item.index_name,
             price=item.result.index_price,
             ts=ts,
@@ -53,15 +48,15 @@ def fetch_prices(indexes: list[IndexDataDict]) -> list[dict]:
         for item in items
     ]
 
-    return [item.to_dict() for item in results]
+    return [item.to_payload() for item in results]
 
 
 @shared_task(
     name="price_collector.store_prices",
     bind=True,
 )
-def store_prices_task(self, raw_results: list[dict]) -> None:  # noqa: ANN001
-    result = store_prices([DTO.from_dict(item) for item in raw_results], logger=logger)
+def store_prices_task(self, raw_results: list[PriceTransferPayload]) -> None:  # noqa: ANN001
+    result = store_prices([PriceSnapshot.from_payload(item) for item in raw_results], logger=logger)
     if not result:
         raise self.retry(exc=RuntimeError("All API sources failed or timed out"))
 
