@@ -39,7 +39,7 @@ services:
     environment:
       DATABASE_DSN: "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}"
       REDIS_DSN: "redis://redis:6379/0"
-    command: celery --app=tasks:app_celery worker --loglevel=${CELERY_LOGLEVEL:-INFO}
+    command: celery --app=tasks:app_celery worker --loglevel=${CELERY_LOGLEVEL:-INFO} --concurrency=2
     depends_on:
       app_prepare:
         condition: service_completed_successfully
