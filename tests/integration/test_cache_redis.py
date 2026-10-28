@@ -8,7 +8,7 @@ from api.services.cache import LatestPriceCache
 
 @pytest.mark.asyncio
 async def test_cache_round_trip(redis_client) -> None:
-    cache = LatestPriceCache(redis_client)
+    cache = LatestPriceCache(redis_client, ttl=60)
     price = IndexPriceResponse(
         id=1,
         ticker="BTC",
@@ -16,7 +16,7 @@ async def test_cache_round_trip(redis_client) -> None:
         timestamp=1_760_000_000,
     )
 
-    await cache.set_latest("BTC", price, ttl=60)
+    await cache.set_latest("BTC", price)
     result = await cache.get_latest("BTC")
 
     assert result == price
@@ -31,7 +31,7 @@ async def test_cache_returns_none_for_missing_key(redis_client) -> None:
 
 @pytest.mark.asyncio
 async def test_cache_sets_expiration(redis_client) -> None:
-    cache = LatestPriceCache(redis_client)
+    cache = LatestPriceCache(redis_client, ttl=60)
     price = IndexPriceResponse(
         id=1,
         ticker="BTC",
@@ -39,7 +39,7 @@ async def test_cache_sets_expiration(redis_client) -> None:
         timestamp=100,
     )
 
-    await cache.set_latest("BTC", price, ttl=60)
+    await cache.set_latest("BTC", price)
 
     ttl = await redis_client.ttl("price:latest:BTC")
 

@@ -4,6 +4,7 @@ from pydantic import ValidationError
 from redis import RedisError
 from redis.asyncio import Redis
 
+from config import config
 from null_logger import NullLogger
 
 from ..schemas import IndexPriceResponse
@@ -12,15 +13,18 @@ from ..schemas import IndexPriceResponse
 class LatestPriceCache:
     _logger: logging.Logger
     _redis: Redis
+    _ttl: int
 
     def __init__(
         self,
         redis: Redis,
         *,
+        ttl: int = config.CACHE_LIFETIME,
         logger: logging.Logger | None = None,
     ) -> None:
-        self._redis = redis
         self._logger = logger or NullLogger(__name__)
+        self._redis = redis
+        self._ttl = ttl
 
     async def get_latest(
         self,
@@ -50,14 +54,13 @@ class LatestPriceCache:
         self,
         ticker: str,
         price: IndexPriceResponse,
-        ttl: int = 30,
     ) -> None:
         self._logger.debug("Cached price for %s: %s", ticker, price)
         try:
             await self._redis.set(
                 f"price:latest:{ticker}",
                 price.model_dump_json(),
-                ex=ttl,
+                ex=self._ttl,
             )
         except RedisError as e:
             self._logger.error("Redis connection failed: %s", e)
@@ -67,4 +70,7 @@ class LatestPriceCache:
         self,
         ticker: str,
     ) -> None:
-        await self._redis.delete(f"price:latest:{ticker}")
+        try:
+            await self._redis.delete(f"price:latest:{ticker}")
+        except RedisError:
+            self._logger.exception("Redis connection failed")

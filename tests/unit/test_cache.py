@@ -6,6 +6,7 @@ import pytest
 
 from api.schemas import IndexPriceResponse
 from api.services.cache import LatestPriceCache
+from config import config
 
 
 @pytest.fixture
@@ -57,11 +58,11 @@ async def test_get_latest_deserializes_cached_value(
 
 @pytest.mark.asyncio
 async def test_set_latest_saves_json_with_ttl(
-    cache: LatestPriceCache,
     redis_mock: AsyncMock,
     price: IndexPriceResponse,
 ) -> None:
-    await cache.set_latest("BTC", price, ttl=45)
+    cache = LatestPriceCache(redis_mock, ttl=45)
+    await cache.set_latest("BTC", price)
 
     redis_mock.set.assert_awaited_once()
     args, kwargs = redis_mock.set.await_args
@@ -80,7 +81,7 @@ async def test_set_latest_uses_default_ttl(
     await cache.set_latest("BTC", price)
 
     _, kwargs = redis_mock.set.await_args
-    assert kwargs == {"ex": 30}
+    assert kwargs == {"ex": config.CACHE_LIFETIME}
 
 
 @pytest.mark.asyncio
