@@ -96,7 +96,7 @@ class PriceRepository:
             SELECT id, ticker, price, timestamp
             FROM index_prices
             WHERE ticker = $1
-            ORDER BY timestamp DESC
+            ORDER BY timestamp DESC, id DESC
             LIMIT 1;
         """
         rows = await self._fetch(query, ticker, schema=IndexPriceResponse)
