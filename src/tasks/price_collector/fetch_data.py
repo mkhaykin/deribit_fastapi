@@ -2,7 +2,7 @@ import asyncio
 import logging
 from dataclasses import dataclass
 from decimal import Decimal
-from typing import Any, Iterable, List, Literal, Type
+from typing import Any, List, Literal, Type
 
 import aiohttp
 from aiohttp import ClientSession
@@ -84,7 +84,7 @@ async def _fetch_index[T: BaseModel](
 
 
 async def get_prices(
-    tickets: Iterable[QueryTicket],
+    tickets: list[QueryTicket],
     *,
     logger: logging.Logger | None = None,
     timeout: aiohttp.ClientTimeout = HTTP_TIMEOUT,
