@@ -4,6 +4,7 @@ from typing import Annotated
 import asyncpg
 from fastapi import Depends
 from redis.asyncio import Redis
+from starlette.datastructures import URL
 from starlette.requests import Request
 
 from .services.health import HealthService
@@ -38,3 +39,19 @@ def get_health_service(
     logger: Annotated[logging.Logger, Depends(get_logger)],
 ) -> HealthService:
     return HealthService(pool=pool, redis=redis, logger=logger)
+
+
+def build_next_link(
+    request: Request,
+    *,
+    ticker: str,
+    limit: int,
+    cursor: str,
+) -> str:
+    next_url = URL(str(request.url)).replace_query_params(
+        ticker=ticker,
+        limit=limit,
+        cursor=cursor,
+    )
+
+    return str(next_url)

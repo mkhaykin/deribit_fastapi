@@ -13,8 +13,9 @@ from fastapi import (
     Response,
     status,
 )
+from pydantic import BaseModel, Field
 
-from ..helpers import get_price_service
+from ..helpers import build_next_link, get_price_service
 from ..schemas import IndexPriceResponse
 from ..services.price import PriceService
 
@@ -23,15 +24,19 @@ router = APIRouter()
 logger = logging.getLogger(__name__)
 
 
+class PriceCursor(BaseModel):
+    timestamp: int = Field(0, ge=0, alias="t")
+    row_id: int = Field(0, ge=0, alias="i")
+
+
 def encode_cursor(timestamp: int, row_id: int) -> str:
     cursor_data = json.dumps({"t": timestamp, "i": row_id})
     return base64.urlsafe_b64encode(cursor_data.encode()).decode()
 
 
-def decode_cursor(cursor_str: str) -> tuple[int, int]:
+def decode_cursor(cursor_str: str) -> PriceCursor:
     decoded = base64.urlsafe_b64decode(cursor_str.encode()).decode()
-    data = json.loads(decoded)
-    return data["t"], data["i"]
+    return PriceCursor.model_validate_json(decoded)
 
 
 @router.get(
@@ -53,7 +58,10 @@ async def get_all_prices(  # noqa: PLR0913, PLR0917
     last_timestamp, last_id = None, None
     if cursor:
         try:
-            last_timestamp, last_id = decode_cursor(cursor)
+            price_cursor = decode_cursor(cursor)
+            last_timestamp = price_cursor.timestamp
+            last_id = price_cursor.row_id
+
             logger.debug("Декодировали параметры: last_timestamp=%d, last_id=%d", last_timestamp, last_id)
         except Exception as e:
             logger.error("Ошибка разбора %s: %s", cursor, e)
@@ -68,10 +76,8 @@ async def get_all_prices(  # noqa: PLR0913, PLR0917
         last_row = result[-1]
         new_cursor = encode_cursor(last_row.timestamp, last_row.id)
         response.headers["X-Next-Cursor"] = new_cursor
-        base_url = request.url_for(request.scope["endpoint"].__name__)
-        response.headers["Link"] = (
-            f'<{base_url}?ticker={ticker}&limit={limit}&cursor={new_cursor}>; rel="next"'
-        )
+        next_link = build_next_link(request, ticker=ticker, limit=limit, cursor=new_cursor)
+        response.headers["Link"] = f'<{next_link}>; rel="next"'
     else:
         response.headers["X-Next-Cursor"] = ""
         if "Link" in response.headers:
