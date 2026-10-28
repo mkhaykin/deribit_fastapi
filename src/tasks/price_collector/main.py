@@ -6,6 +6,7 @@ from celery.utils.log import get_task_logger
 
 from config import config
 
+from .cache import invalidate
 from .fetch_data import QueryTicket, get_prices
 from .schemas import IndexRequestTask, PriceSnapshot, PriceTransferPayload
 from .store_data import store_prices
@@ -59,6 +60,15 @@ def store_prices_task(self, raw_results: list[PriceTransferPayload]) -> None:  #
     result = store_prices([PriceSnapshot.from_payload(item) for item in raw_results], logger=logger)
     if not result:
         raise self.retry(exc=RuntimeError("All API sources failed or timed out"))
+
+    redis_client = getattr(self.app, "redis_client", None)
+    if not redis_client:
+        logger.warning("There is no redis client for this task")
+    else:
+        for item in raw_results:
+            ticker = item["ticker"]
+            logger.debug("Cache invalidation for %s", ticker)
+            invalidate(redis_client, ticker)
 
 
 @shared_task(name="price_collector.task_request")
