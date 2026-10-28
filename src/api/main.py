@@ -1,5 +1,5 @@
 from collections.abc import AsyncIterator
-from contextlib import asynccontextmanager
+from contextlib import AsyncExitStack, asynccontextmanager
 from pathlib import Path
 
 import asyncpg
@@ -19,22 +19,25 @@ from .routers.root import router as root_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
-    app.state.pool = await asyncpg.create_pool(
-        dsn=config.DATABASE_DSN,
-        min_size=1,
-        max_size=10,
-    )
-    app.state.redis = from_url(
-        config.REDIS_DSN,
-        socket_timeout=config.REDIS_SOCKET_TIMEOUT,
-        health_check_interval=config.REDIS_HEALTH_CHECK_INTERVAL,
-    )
+    async with AsyncExitStack() as stack:
+        pg_pool = await asyncpg.create_pool(
+            dsn=config.DATABASE_DSN,
+            min_size=1,
+            max_size=10,
+        )
+        stack.push_async_callback(pg_pool.close)
 
-    try:
+        redis = from_url(
+            config.REDIS_DSN,
+            socket_timeout=config.REDIS_SOCKET_TIMEOUT,
+            health_check_interval=config.REDIS_HEALTH_CHECK_INTERVAL,
+        )
+        stack.push_async_callback(redis.aclose)
+
+        app.state.pool = pg_pool
+        app.state.redis = redis
+
         yield
-    finally:
-        await app.state.redis.close()
-        await app.state.pool.close()
 
 
 async def repository_error_handler(
