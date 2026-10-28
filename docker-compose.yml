@@ -39,11 +39,14 @@ services:
     environment:
       DATABASE_DSN: "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}"
       REDIS_DSN: "redis://redis:6379/0"
-    command: celery --app=tasks:app_celery worker --loglevel=INFO
+    command: celery --app=tasks:app_celery worker --loglevel=${CELERY_LOGLEVEL:-INFO} --concurrency=2
     depends_on:
-      - app_prepare
-      - db
-      - redis
+      app_prepare:
+        condition: service_completed_successfully
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     links:
       - redis
 
@@ -57,11 +60,14 @@ services:
     environment:
       DATABASE_DSN: "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}"
       REDIS_DSN: "redis://redis:6379/0"
-    command: celery --app=tasks:app_celery beat --loglevel=INFO
+    command: celery --app=tasks.beat:app_celery beat --loglevel=${CELERY_LOGLEVEL:-INFO}
     depends_on:
-      - app_prepare
-      - db
-      - redis
+      app_prepare:
+        condition: service_completed_successfully
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     links:
       - celery
       - redis
@@ -80,8 +86,11 @@ services:
     ports:
       - "8000:8000"
     depends_on:
-      - app_prepare
-      - db
+      app_prepare:
+        condition: service_completed_successfully
+      db:
+        condition: service_healthy
+
     entrypoint: uvicorn api:app --workers 1 --host 0.0.0.0 --port 8000
 
   app_prepare:
@@ -92,7 +101,7 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    command: yoyo apply --batch -v /app/migrations -d "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}"
+    command: yoyo -vvv apply --batch /app/migrations -d "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}"
     # command: sleep infinity
 
 networks:

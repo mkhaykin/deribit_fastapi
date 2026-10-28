@@ -8,7 +8,7 @@ from null_logger import NullLogger
 
 from ..repository import PriceRepository
 from ..schemas import IndexPriceResponse
-from ..services.cache import PriceCacheService
+from ..services.cache import LatestPriceCache
 
 
 def _start_date(target_date: date) -> datetime:
@@ -25,7 +25,7 @@ def _start_date(target_date: date) -> datetime:
 
 class PriceService:
     _logger: logging.Logger
-    _price_cache: PriceCacheService
+    _price_cache: LatestPriceCache
     _price_repo: PriceRepository
 
     def __init__(
@@ -39,14 +39,26 @@ class PriceService:
             pool,
             logger=logger,
         )
-        self._price_cache = PriceCacheService(
+        self._price_cache = LatestPriceCache(
             redis,
             logger=logger,
         )
         self._logger = logger or NullLogger(__name__)
 
-    async def get_all_by_ticker(self, ticker: str) -> list[IndexPriceResponse]:
-        return await self._price_repo.get_all_by_ticker(ticker)
+    async def get_all_by_ticker(
+        self,
+        ticker: str,
+        last_created_at: int | None = None,
+        last_id: int | None = None,
+        limit: int | None = None,
+    ) -> list[IndexPriceResponse]:
+        # TODO проверку на last_created_at и  last_id сюда
+        return await self._price_repo.get_all_by_ticker(
+            ticker,
+            last_created_at,
+            last_id,
+            limit,
+        )
 
     async def get_latest_by_ticker(self, ticker: str) -> IndexPriceResponse | None:
         cached = await self._price_cache.get_latest(ticker)
@@ -58,7 +70,19 @@ class PriceService:
             await self._price_cache.set_latest(ticker, price)
         return price
 
-    async def get_by_ticker_and_date(self, ticker: str, target_date: date) -> list[IndexPriceResponse]:
+    async def get_by_ticker_and_date(
+        self,
+        ticker: str,
+        target_date: date,
+        limit: int | None = None,
+        offset: int | None = None,
+    ) -> list[IndexPriceResponse]:
         start_timestamp = int(_start_date(target_date).timestamp())
         end_timestamp = int(_start_date(target_date + timedelta(days=1)).timestamp())
-        return await self._price_repo.get_by_ticker_and_date(ticker, start_timestamp, end_timestamp)
+        return await self._price_repo.get_by_ticker_and_date(
+            ticker,
+            start_timestamp,
+            end_timestamp,
+            limit,
+            offset,
+        )

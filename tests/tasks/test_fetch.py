@@ -5,8 +5,7 @@ import aiohttp
 import pytest
 from pydantic import BaseModel
 
-from config import config
-from tasks.fetch_data import _fetch_url
+from tasks.price_collector.fetch_data import _fetch_index
 
 
 class DummyModel(BaseModel):
@@ -16,12 +15,12 @@ class DummyModel(BaseModel):
 
 @pytest.mark.asyncio
 async def test_fetch_url_success_with_mock(aresponses):
-    config.API_URL = "http://fakeapi.com"
+    url = "http://fakeapi.com/public/get_index_price"
     index_name = "btc_usd"
 
     aresponses.add(
-        "fakeapi.com",
-        "/public/get_index_price",
+        aresponses.ANY,
+        aresponses.ANY,
         "GET",
         aresponses.Response(
             text='{"index_name": "btc_usd", "price": 65000.0}', status=200, content_type="application/json"
@@ -29,7 +28,7 @@ async def test_fetch_url_success_with_mock(aresponses):
     )
 
     async with aiohttp.ClientSession() as session:
-        result = await _fetch_url(session, index_name, DummyModel)
+        result = await _fetch_index(session, url, index_name, DummyModel)
 
         assert isinstance(result, DummyModel)
         assert result.price == 65000.0
@@ -38,29 +37,28 @@ async def test_fetch_url_success_with_mock(aresponses):
 
 @pytest.mark.asyncio
 async def test_fetch_url_network_error_with_mock(aresponses, caplog):
-    config.API_URL = "http://fakeapi.com"
+    url = "http://fakeapi.com/public/get_index_price"
 
-    aresponses.add("fakeapi.com", "/public/get_index_price", "GET", aresponses.Response(status=500))
+    aresponses.add(aresponses.ANY, aresponses.ANY, "GET", aresponses.Response(status=500))
 
     async with aiohttp.ClientSession() as session:
         # Проверяем, что функция логирует и прокидывает ClientResponseError наверх
         with pytest.raises(aiohttp.ClientResponseError):
-            await _fetch_url(session, "btc_usd", DummyModel, logger=logging.getLogger(__name__))
-        print(caplog.text)
+            await _fetch_index(session, url, "btc_usd", DummyModel, logger=logging.getLogger(__name__))
         assert "Response error fetching" in caplog.text
 
 
 @pytest.mark.asyncio
 async def test_fetch_url_timeout_error(aresponses):
-    config.API_URL = "http://fakeapi.com"
+    url = "http://fakeapi.com/public/get_index_price"
 
     async def raise_timeout(*args, **kwargs):
         await asyncio.sleep(1)
-        raise asyncio.TimeoutError("Connection timed out")
+        raise RuntimeError("Connection timed out")
 
-    aresponses.add("fakeapi.com", "/public/get_index_price", "GET", raise_timeout)
+    aresponses.add(aresponses.ANY, aresponses.ANY, "GET", raise_timeout)
 
     short_timeout = aiohttp.ClientTimeout(total=0.01)
     async with aiohttp.ClientSession(timeout=short_timeout) as session:
         with pytest.raises(asyncio.TimeoutError):
-            await _fetch_url(session, "btc_usd", DummyModel)
+            await _fetch_index(session, url, "btc_usd", DummyModel)

@@ -31,7 +31,7 @@ def dependencies(monkeypatch):
     )
     monkeypatch.setattr(
         price_service_module,
-        "PriceCacheService",
+        "LatestPriceCache",
         lambda *args, **kwargs: cache,
     )
 
@@ -99,7 +99,7 @@ async def test_get_all_delegates_to_repository(
     result = await service.get_all_by_ticker("BTC")
 
     assert result == [price]
-    repository.get_all_by_ticker.assert_awaited_once_with("BTC")
+    repository.get_all_by_ticker.assert_awaited_once_with("BTC", None, None, None)
 
 
 @pytest.mark.asyncio
@@ -118,4 +118,6 @@ async def test_date_filter_uses_utc_day_boundaries(
         "BTC",
         1735776000,  # 2025-01-02 00:00:00 UTC
         1735862400,  # 2025-01-03 00:00:00 UTC
+        None,
+        None,
     )

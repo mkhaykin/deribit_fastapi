@@ -5,8 +5,7 @@ from decimal import Decimal
 import pytest
 from aiohttp.web_request import BaseRequest
 
-from config import config
-from tasks.fetch_data import get_prices
+from tasks.price_collector.fetch_data import QueryTicket, get_prices
 
 
 @pytest.fixture
@@ -30,7 +29,6 @@ def fetch_data():
 @pytest.mark.asyncio
 async def test_get_prices_full_success(fetch_data, aresponses, caplog):
     """полное получение всех данных"""
-    config.API_URL = "http://fakeapi.com"
     test_logger = logging.getLogger("test_logger")
     caplog.set_level(logging.WARNING, logger="test_logger")
     prices = {
@@ -45,7 +43,19 @@ async def test_get_prices_full_success(fetch_data, aresponses, caplog):
         )
 
     aresponses.add("fakeapi.com", "/public/get_index_price", "GET", response=response_func, repeat=2)
-    results = await get_prices(logger=test_logger)
+    results, exc = await get_prices(
+        [
+            QueryTicket(
+                index_name="btc_usd",
+                url="http://fakeapi.com/public/get_index_price?index_name=btc_usd",
+            ),
+            QueryTicket(
+                index_name="eth_usd",
+                url="http://fakeapi.com/public/get_index_price?index_name=eth_usd",
+            ),
+        ],
+        logger=test_logger,
+    )
 
     assert len(results) == 2
     assert {r.index_name for r in results} == {"btc_usd", "eth_usd"}
@@ -73,7 +83,6 @@ async def test_get_prices_partial_success(
     broken_query: str,
 ):
     """частичное получение данных (падаем на эфире)"""
-    config.API_URL = "http://fakeapi.com"
     test_logger = logging.getLogger("test_logger")
     caplog.set_level(logging.WARNING, logger="test_logger")
 
@@ -93,7 +102,19 @@ async def test_get_prices_partial_success(
 
     aresponses.add("fakeapi.com", "/public/get_index_price", "GET", response=response_func, repeat=2)
 
-    results = await get_prices(logger=test_logger)
+    results, exc = await get_prices(
+        [
+            QueryTicket(
+                index_name="btc_usd",
+                url="http://fakeapi.com/public/get_index_price?index_name=btc_usd",
+            ),
+            QueryTicket(
+                index_name="eth_usd",
+                url="http://fakeapi.com/public/get_index_price?index_name=eth_usd",
+            ),
+        ],
+        logger=test_logger,
+    )
 
     assert len(results) == 1
 
@@ -108,7 +129,6 @@ async def test_get_prices_partial_success(
 @pytest.mark.asyncio
 async def test_get_prices_full_failure(aresponses, caplog):
     """Сценарий 3: Полное отсутствие данных (оба запроса упали)"""
-    config.API_URL = "http://fakeapi.com"
     test_logger = logging.getLogger("test_logger")
     caplog.set_level(logging.WARNING, logger="test_logger")
 
@@ -119,7 +139,19 @@ async def test_get_prices_full_failure(aresponses, caplog):
         "fakeapi.com", "/public/get_index_price?index_name=eth_usd", "GET", aresponses.Response(status=500)
     )
 
-    results = await get_prices(logger=test_logger)
+    results, exc = await get_prices(
+        [
+            QueryTicket(
+                index_name="btc_usd",
+                url="http://fakeapi.com/public/get_index_price?index_name=btc_usd",
+            ),
+            QueryTicket(
+                index_name="eth_usd",
+                url="http://fakeapi.com/public/get_index_price?index_name=eth_usd",
+            ),
+        ],
+        logger=test_logger,
+    )
 
     assert len(results) == 0
 

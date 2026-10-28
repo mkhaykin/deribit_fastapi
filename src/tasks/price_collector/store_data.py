@@ -1,6 +1,4 @@
 import logging
-from dataclasses import dataclass
-from decimal import Decimal
 from typing import List
 
 import psycopg2
@@ -9,17 +7,11 @@ from psycopg2.extras import execute_values
 
 from config import config
 from null_logger import NullLogger
-
-
-@dataclass(frozen=True, slots=True)
-class DTO:
-    ticker: str
-    price: Decimal
-    ts: int
+from tasks.price_collector.schemas import PriceSnapshot
 
 
 def store_prices(
-    items: List[DTO],
+    items: List[PriceSnapshot],
     logger: logging.Logger | None = None,
 ) -> bool:
     log = logger or NullLogger(__name__)

@@ -5,7 +5,7 @@ import pytest
 from _pytest.logging import LogCaptureFixture
 from pydantic import BaseModel, ValidationError
 
-from tasks.fetch_data import _fetch_url
+from tasks.price_collector.fetch_data import _fetch_index
 
 
 class DummyModel(BaseModel):
@@ -32,6 +32,9 @@ class FakeResponse:
     async def text(self) -> str:
         return self._text
 
+    async def read(self) -> bytes:
+        return self._text.encode()
+
 
 class FakeClientSession:
     def __init__(self, text: str, status: int = 200):
@@ -46,7 +49,7 @@ class FakeClientSession:
 async def test_fetch_url_success_with_fake():
     fake_session = FakeClientSession(text='{"index_name": "eth_usd", "price": 3500.0}', status=200)
 
-    result = await _fetch_url(fake_session, "eth_usd", DummyModel)
+    result = await _fetch_index(fake_session, "", "eth_usd", DummyModel)
 
     assert result.price == 3500.0
     assert result.index_name == "eth_usd"
@@ -75,7 +78,7 @@ async def test_fetch_url_validation_error_with_fake(
     fake_session = FakeClientSession(text=wrong_text, status=200)
 
     with pytest.raises(ValidationError):
-        await _fetch_url(fake_session, ticket, DummyModel, logger=logging.getLogger(__name__))
+        await _fetch_index(fake_session, "", ticket, DummyModel, logger=logging.getLogger(__name__))
 
-    assert f"Validation failed for {ticket}" in caplog.text
+    assert f"Validation failed for index '{ticket}'" in caplog.text
     assert wrong_text in caplog.text

@@ -11,7 +11,9 @@ class Config:
     CACHE_LIFETIME: int = int(os.environ.get("CACHE_LIFETIME") or 5)
     REQUEST_SCHEDULE: int = int(os.environ.get("REQUEST_SCHEDULE") or 60)
 
-    API_URL = "https://test.deribit.com/api/v2"
+    INDEX_PRICE_URL = "https://test.deribit.com/api/v2/public/get_index_price?index_name={index_name}"
+
+    API_LOGLEVEL: str = os.getenv("API_LOGLEVEL", "INFO").upper()
 
 
 config = Config()

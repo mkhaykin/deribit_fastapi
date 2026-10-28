@@ -5,7 +5,8 @@ from unittest.mock import AsyncMock
 import pytest
 
 from api.schemas import IndexPriceResponse
-from api.services.cache import PriceCacheService
+from api.services.cache import LatestPriceCache
+from config import config
 
 
 @pytest.fixture
@@ -14,8 +15,8 @@ def redis_mock() -> AsyncMock:
 
 
 @pytest.fixture
-def cache(redis_mock: AsyncMock) -> PriceCacheService:
-    return PriceCacheService(redis_mock)
+def cache(redis_mock: AsyncMock) -> LatestPriceCache:
+    return LatestPriceCache(redis_mock)
 
 
 @pytest.fixture
@@ -30,7 +31,7 @@ def price() -> IndexPriceResponse:
 
 @pytest.mark.asyncio
 async def test_get_latest_returns_none_on_cache_miss(
-    cache: PriceCacheService,
+    cache: LatestPriceCache,
     redis_mock: AsyncMock,
 ) -> None:
     redis_mock.get.return_value = None
@@ -43,7 +44,7 @@ async def test_get_latest_returns_none_on_cache_miss(
 
 @pytest.mark.asyncio
 async def test_get_latest_deserializes_cached_value(
-    cache: PriceCacheService,
+    cache: LatestPriceCache,
     redis_mock: AsyncMock,
     price: IndexPriceResponse,
 ) -> None:
@@ -57,11 +58,11 @@ async def test_get_latest_deserializes_cached_value(
 
 @pytest.mark.asyncio
 async def test_set_latest_saves_json_with_ttl(
-    cache: PriceCacheService,
     redis_mock: AsyncMock,
     price: IndexPriceResponse,
 ) -> None:
-    await cache.set_latest("BTC", price, ttl=45)
+    cache = LatestPriceCache(redis_mock, ttl=45)
+    await cache.set_latest("BTC", price)
 
     redis_mock.set.assert_awaited_once()
     args, kwargs = redis_mock.set.await_args
@@ -73,19 +74,19 @@ async def test_set_latest_saves_json_with_ttl(
 
 @pytest.mark.asyncio
 async def test_set_latest_uses_default_ttl(
-    cache: PriceCacheService,
+    cache: LatestPriceCache,
     redis_mock: AsyncMock,
     price: IndexPriceResponse,
 ) -> None:
     await cache.set_latest("BTC", price)
 
     _, kwargs = redis_mock.set.await_args
-    assert kwargs == {"ex": 30}
+    assert kwargs == {"ex": config.CACHE_LIFETIME}
 
 
 @pytest.mark.asyncio
 async def test_get_latest_rejects_invalid_cached_json(
-    cache: PriceCacheService,
+    cache: LatestPriceCache,
     redis_mock: AsyncMock,
 ) -> None:
     redis_mock.get.return_value = '{"id": "not-an-integer"}'
