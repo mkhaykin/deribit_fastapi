@@ -13,5 +13,7 @@ class Config:
 
     INDEX_PRICE_URL = "https://test.deribit.com/api/v2/public/get_index_price?index_name={index_name}"
 
+    API_LOGLEVEL: str = os.getenv("API_LOGLEVEL", "INFO").upper()
+
 
 config = Config()

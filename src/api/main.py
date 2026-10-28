@@ -10,6 +10,7 @@ from starlette.staticfiles import StaticFiles
 
 from config import config
 
+from .logging_config import configure_logging
 from .repository import RepositoryError
 from .routers.health import router as health_router
 from .routers.price import router as price_router
@@ -47,6 +48,8 @@ async def repository_error_handler(
 
 
 def create_app() -> FastAPI:
+    configure_logging()
+
     app = FastAPI(lifespan=lifespan)
 
     app.add_exception_handler(
